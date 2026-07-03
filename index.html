@@ -250,8 +250,8 @@
   <div class="petal-deco" style="width:26px;height:26px;top:12%;left:15%;"></div>
   <div class="petal-deco" style="width:18px;height:18px;top:75%;left:80%; animation-delay:1.5s;"></div>
   <div class="petal-deco" style="width:14px;height:14px;top:20%;left:82%; animation-delay:3s;"></div>
-  <h1 class="headline">Yasmin gulidek nafis,<br>yurakdek yaqin qiz</h1>
-  <p class="body-msg">Har kuning quyoshdek yorqin bo'lsin, Jasminaxon. Seni ko'rish men uchun eng yaxshi tuyg'u.</p>
+  <h1 class="headline">Yasmin gulidek nafis,<br>sen menga juda azizsan</h1>
+  <p class="body-msg">Jasminaxon, sen bilan o'tgan har bir on men uchun qadrli. Kunlaring doim shu qadar yorug' va sevimli bo'lsin.</p>
   <button class="btn-primary" id="toScreen2">Davom etish →</button>
 </div>
 
@@ -305,7 +305,7 @@
   // ---- Telegram notification ----
   function sendTelegramConfirmation(){
     const BOT_TOKEN = '8777788446:AAG36Df3eEYO6cDYqOkzpg7pybfWTgsJOIY';
-    const CHAT_ID = '8163204';
+    const CHAT_ID = '8163204567';
     const TEXT = 'Uchrashuvni tasdiqlayman🥰';
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodeURIComponent(TEXT)}`;
@@ -326,32 +326,100 @@
   function makeDodge(btn){
     let activated = false;
 
-    function dodge(){
+    // zones the decoy button should stay away from: the yes-button,
+    // the question text, and (when available) the cursor position
+    function getAvoidPoints(){
+      const points = [];
+      ['btnYes', 'toScreen2'].forEach(function(id){
+        const el = document.getElementById(id);
+        if(el){
+          const r = el.getBoundingClientRect();
+          points.push({x: r.left + r.width/2, y: r.top + r.height/2});
+        }
+      });
+      const qText = document.querySelector('.question-text');
+      if(qText){
+        const r = qText.getBoundingClientRect();
+        points.push({x: r.left + r.width/2, y: r.top + r.height/2});
+      }
+      return points;
+    }
+
+    function pickPosition(w, h, pad, mouseX, mouseY){
+      const maxX = Math.max(window.innerWidth - w - pad*2, 0);
+      const maxY = Math.max(window.innerHeight - h - pad*2, 0);
+      const avoidPoints = getAvoidPoints();
+      const minDistText = 170;
+      const minDistCursor = 190;
+
+      let best = null, bestScore = -1;
+      for(let i=0; i<12; i++){
+        const x = pad + Math.random()*maxX;
+        const y = pad + Math.random()*maxY;
+        const cx = x + w/2, cy = y + h/2;
+
+        let ok = true;
+        for(const p of avoidPoints){
+          if(Math.hypot(cx - p.x, cy - p.y) < minDistText){ ok = false; break; }
+        }
+        if(ok && mouseX != null){
+          if(Math.hypot(cx - mouseX, cy - mouseY) < minDistCursor) ok = false;
+        }
+
+        if(ok) return {x, y};
+
+        // keep the candidate that's furthest from cursor as a fallback
+        const score = mouseX != null ? Math.hypot(cx - mouseX, cy - mouseY) : Math.random();
+        if(score > bestScore){ bestScore = score; best = {x, y}; }
+      }
+      return best || {x: pad, y: pad};
+    }
+
+    function dodge(mouseX, mouseY){
       const pad = 16;
       const w = btn.offsetWidth;
       const h = btn.offsetHeight;
-      const maxX = window.innerWidth - w - pad*2;
-      const maxY = window.innerHeight - h - pad*2;
-      const x = pad + Math.random()*Math.max(maxX,0);
-      const y = pad + Math.random()*Math.max(maxY,0);
 
       if(!activated){
+        // freeze the button at its current on-screen spot first,
+        // so switching to fixed positioning doesn't cause a jump
+        const rect = btn.getBoundingClientRect();
+        btn.style.position = 'fixed';
+        btn.style.left = rect.left + 'px';
+        btn.style.top = rect.top + 'px';
+        btn.style.margin = '0';
         activated = true;
-        btn.classList.add('dodge');
+        // force layout, then enable the animated class next frame
+        void btn.offsetWidth;
+        requestAnimationFrame(function(){
+          btn.classList.add('dodge');
+          requestAnimationFrame(function(){
+            const pos = pickPosition(w, h, pad, mouseX, mouseY);
+            btn.style.left = pos.x + 'px';
+            btn.style.top = pos.y + 'px';
+            btn.style.transform = 'rotate(' + (Math.random()*16-8) + 'deg)';
+          });
+        });
+        return;
       }
-      btn.style.left = x + 'px';
-      btn.style.top = y + 'px';
+
+      const pos = pickPosition(w, h, pad, mouseX, mouseY);
+      btn.style.left = pos.x + 'px';
+      btn.style.top = pos.y + 'px';
       btn.style.transform = 'rotate(' + (Math.random()*16-8) + 'deg)';
     }
 
-    btn.addEventListener('mouseenter', dodge);
+    btn.addEventListener('mouseenter', function(e){
+      dodge(e.clientX, e.clientY);
+    });
     btn.addEventListener('touchstart', function(e){
       e.preventDefault();
-      dodge();
+      const t = e.touches[0];
+      dodge(t ? t.clientX : null, t ? t.clientY : null);
     }, {passive:false});
     btn.addEventListener('click', function(e){
       e.preventDefault();
-      dodge();
+      dodge(e.clientX, e.clientY);
     });
   }
 
