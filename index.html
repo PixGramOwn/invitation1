@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taklif — Jasminaxon</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime&display=swap');
+
+  :root{
+    --bg-main:#e0a0df;
+    --bg-main-deep:#c988c9;
+    --paper:#fdf7ee;
+    --text-dark:#3b1f3a;
+    --text-soft:#6b4a68;
+    --accent-gold:#f4c95d;
+    --accent-green:#6a9a6f;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{ height:100%; }
+  body{
+    font-family:'EB Garamond', serif;
+    background:var(--bg-main);
+    color:var(--text-dark);
+    overflow-x:hidden;
+  }
+
+  .screen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .8s ease;
+    background:radial-gradient(ellipse at 50% 15%, var(--bg-main) 0%, var(--bg-main-deep) 100%);
+    padding:32px 24px;
+    text-align:center;
+  }
+  .screen.active{ opacity:1; pointer-events:auto; }
+
+  /* decorative soft petals */
+  .petal-deco{
+    position:absolute;
+    border-radius:50% 0 50% 50%;
+    background:rgba(255,255,255,.35);
+    filter:blur(.5px);
+    animation:float 7s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{ transform:translateY(0) rotate(0deg); }
+    50%{ transform:translateY(-14px) rotate(12deg); }
+  }
+
+  h1.headline{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(32px,6.5vw,54px);
+    line-height:1.15;
+    color:var(--text-dark);
+    text-shadow:0 2px 18px rgba(255,255,255,.4);
+    max-width:640px;
+  }
+
+  p.body-msg{
+    font-size:clamp(17px,2.4vw,21px);
+    line-height:1.75;
+    max-width:520px;
+    margin-top:20px;
+    color:var(--text-soft);
+  }
+
+  .btn-primary{
+    margin-top:36px;
+    padding:14px 38px;
+    border:none;
+    border-radius:40px;
+    background:var(--text-dark);
+    color:var(--paper);
+    font-family:'EB Garamond', serif;
+    font-size:17px;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 8px 24px rgba(59,31,58,.25);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 30px rgba(59,31,58,.32); }
+
+  /* ---- question screen ---- */
+  .question-text{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(26px,5vw,38px);
+    max-width:600px;
+    margin-bottom:8px;
+  }
+  .question-date{
+    font-style:italic;
+    color:var(--text-soft);
+    margin-bottom:40px;
+    font-size:16px;
+  }
+
+  .choice-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    justify-content:center;
+    width:100%;
+    max-width:560px;
+  }
+
+  .choice-btn{
+    padding:13px 26px;
+    border-radius:30px;
+    border:1.5px solid var(--text-dark);
+    background:transparent;
+    color:var(--text-dark);
+    font-family:'EB Garamond', serif;
+    font-size:16px;
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease, transform .15s ease;
+  }
+  .choice-btn.yes{
+    background:var(--text-dark);
+    color:var(--paper);
+  }
+  .choice-btn.yes:hover{ transform:translateY(-2px); }
+
+  .choice-btn.dodge{
+    position:fixed;
+    z-index:50;
+    transition: left .35s cubic-bezier(.34,1.56,.64,1), top .35s cubic-bezier(.34,1.56,.64,1), transform .3s ease;
+  }
+  .choice-btn.dodge:active{ transform:scale(.95); }
+
+  .hint-small{
+    margin-top:56px;
+    font-size:13px;
+    color:var(--text-soft);
+    opacity:.7;
+    font-style:italic;
+  }
+
+  /* ---- receipt screen ---- */
+  .receipt-wrap{
+    perspective:1000px;
+  }
+  .receipt{
+    background:var(--paper);
+    color:var(--text-dark);
+    font-family:'Courier Prime', 'Courier New', monospace;
+    width:min(340px, 84vw);
+    padding:30px 26px 22px;
+    box-shadow:0 20px 50px rgba(59,31,58,.35);
+    position:relative;
+    transform:rotate(-1.5deg);
+    animation:dropIn .7s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  @keyframes dropIn{
+    from{ opacity:0; transform:translateY(-40px) rotate(-1.5deg) scale(.9); }
+    to{ opacity:1; transform:translateY(0) rotate(-1.5deg) scale(1); }
+  }
+  .receipt::after{
+    content:'';
+    position:absolute;
+    left:0; right:0; bottom:-14px;
+    height:14px;
+    background:
+      linear-gradient(-45deg, var(--paper) 8px, transparent 0) 0 0/16px 16px,
+      linear-gradient(45deg, var(--paper) 8px, transparent 0) 0 0/16px 16px;
+    background-repeat:repeat-x;
+  }
+  .receipt-title{
+    text-align:center;
+    font-weight:700;
+    letter-spacing:.15em;
+    font-size:15px;
+    margin-bottom:4px;
+  }
+  .receipt-sub{
+    text-align:center;
+    font-size:11px;
+    color:var(--text-soft);
+    margin-bottom:16px;
+  }
+  .receipt-dash{
+    border-top:1.5px dashed var(--text-soft);
+    margin:14px 0;
+  }
+  .receipt-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    margin:6px 0;
+  }
+  .receipt-row span:first-child{ color:var(--text-soft); }
+  .receipt-msg{
+    font-size:13.5px;
+    line-height:1.7;
+    margin-top:14px;
+    text-align:center;
+  }
+  .receipt-status{
+    text-align:center;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.06em;
+    margin-top:6px;
+    color:var(--accent-green);
+  }
+  .receipt-sign{
+    margin-top:20px;
+    text-align:right;
+    font-size:13px;
+    font-style:italic;
+    font-family:'EB Garamond', serif;
+  }
+  .receipt-stamp{
+    position:absolute;
+    top:22px; right:20px;
+    width:52px; height:52px;
+    border:2px solid var(--accent-green);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent-green);
+    font-family:'EB Garamond',serif;
+    font-weight:600;
+    font-size:10px;
+    text-align:center;
+    line-height:1.2;
+    transform:rotate(12deg);
+    opacity:.85;
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1 -->
+<div class="screen active" data-screen="1">
+  <div class="petal-deco" style="width:26px;height:26px;top:12%;left:15%;"></div>
+  <div class="petal-deco" style="width:18px;height:18px;top:75%;left:80%; animation-delay:1.5s;"></div>
+  <div class="petal-deco" style="width:14px;height:14px;top:20%;left:82%; animation-delay:3s;"></div>
+  <h1 class="headline">Yasmin gulidek nafis,<br>yurakdek yaqin qiz</h1>
+  <p class="body-msg">Har kuning quyoshdek yorqin bo'lsin, Jasminaxon. Seni ko'rish men uchun eng yaxshi tuyg'u.</p>
+  <button class="btn-primary" id="toScreen2">Davom etish →</button>
+</div>
+
+<!-- SCREEN 2 -->
+<div class="screen" data-screen="2">
+  <div class="question-text">Chorshanba kuning<br>(08.07.2026) vaqting bormi?</div>
+  <div class="question-date">bir soatcha vaqtingni ajratasanmi?</div>
+  <div class="choice-row" id="choiceRow">
+    <button class="choice-btn yes" id="btnYes">Ha, albatta sen uchun bor</button>
+    <button class="choice-btn" id="btnLater">Keyinroqqa qoldirsakchi?</button>
+    <button class="choice-btn" id="btnBusy">Vaqtim yo'q</button>
+  </div>
+  <div class="hint-small">(faqat bittasi to'g'ri javob 😉)</div>
+</div>
+
+<!-- SCREEN 3 -->
+<div class="screen" data-screen="3">
+  <div class="receipt-wrap">
+    <div class="receipt">
+      <div class="receipt-stamp">TAS-<br>DIQ</div>
+      <div class="receipt-title">HAMMASI TAYYOR!</div>
+      <div class="receipt-sub">uchrashuv cheki</div>
+      <div class="receipt-dash"></div>
+      <div class="receipt-row"><span>Sana</span><span>08.07.2026, Chorshanba</span></div>
+      <div class="receipt-row"><span>Vaqt</span><span>10:00</span></div>
+      <div class="receipt-row"><span>Manzil</span><span>shahar markazi</span></div>
+      <div class="receipt-dash"></div>
+      <div class="receipt-msg">Shu kuni soat 10:00 da shaharda uchrashamiz.</div>
+      <div class="receipt-status">✓ TASDIQLANDI</div>
+      <div class="receipt-msg" style="margin-top:16px;">Hech qanday muammo emas, hammasi aniq.</div>
+      <div class="receipt-sign">Hurmat ila,<br><strong>Murodjon</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function showScreen(n){
+    document.querySelectorAll('.screen').forEach(s=>{
+      s.classList.toggle('active', s.dataset.screen === String(n));
+    });
+  }
+
+  document.getElementById('toScreen2').addEventListener('click', ()=> showScreen(2));
+
+  document.getElementById('btnYes').addEventListener('click', function(){
+    showScreen(3);
+    sendTelegramConfirmation();
+  });
+
+  // ---- Telegram notification ----
+  function sendTelegramConfirmation(){
+    const BOT_TOKEN = '8777788446:AAG36Df3eEYO6cDYqOkzpg7pybfWTgsJOIY';
+    const CHAT_ID = '8163204';
+    const TEXT = 'Uchrashuvni tasdiqlayman🥰';
+
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodeURIComponent(TEXT)}`;
+
+    // simple GET request, no custom headers -> no CORS preflight
+    fetch(url, { method: 'GET', mode: 'cors' })
+      .catch(function(){
+        // if reading the response is blocked by CORS, the request was
+        // still sent and processed by Telegram's server — retry once
+        // in no-cors mode just in case the first call never left the browser
+        fetch(url, { method: 'GET', mode: 'no-cors' }).catch(function(err){
+          console.error('Telegram xabar yuborishda xatolik:', err);
+        });
+      });
+  }
+
+  // ---- dodging buttons ----
+  function makeDodge(btn){
+    let activated = false;
+
+    function dodge(){
+      const pad = 16;
+      const w = btn.offsetWidth;
+      const h = btn.offsetHeight;
+      const maxX = window.innerWidth - w - pad*2;
+      const maxY = window.innerHeight - h - pad*2;
+      const x = pad + Math.random()*Math.max(maxX,0);
+      const y = pad + Math.random()*Math.max(maxY,0);
+
+      if(!activated){
+        activated = true;
+        btn.classList.add('dodge');
+      }
+      btn.style.left = x + 'px';
+      btn.style.top = y + 'px';
+      btn.style.transform = 'rotate(' + (Math.random()*16-8) + 'deg)';
+    }
+
+    btn.addEventListener('mouseenter', dodge);
+    btn.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      dodge();
+    }, {passive:false});
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      dodge();
+    });
+  }
+
+  makeDodge(document.getElementById('btnLater'));
+  makeDodge(document.getElementById('btnBusy'));
+})();
+</script>
+
+</body>
+</html>
