@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Taklif — Jasminaxon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime&display=swap');
-
   :root{
     --bg-main:#e0a0df;
     --bg-main-deep:#c988c9;
@@ -157,8 +158,17 @@
     padding:30px 26px 22px;
     box-shadow:0 20px 50px rgba(59,31,58,.35);
     position:relative;
-    transform:rotate(-1.5deg);
-    animation:dropIn .7s cubic-bezier(.2,.9,.3,1.2) both;
+    opacity:0;
+  }
+  .receipt.stamp-anim{
+    animation: stampPress .6s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes stampPress{
+    0%{ opacity:0; transform:translateY(-170px) scale(1.35) rotate(-9deg); }
+    50%{ opacity:1; transform:translateY(8px) scale(0.93) rotate(-0.5deg); }
+    68%{ transform:translateY(-5px) scale(1.04) rotate(-2.2deg); }
+    82%{ transform:translateY(2px) scale(0.98) rotate(-1deg); }
+    100%{ opacity:1; transform:translateY(0) scale(1) rotate(-1.5deg); }
   }
   @keyframes dropIn{
     from{ opacity:0; transform:translateY(-40px) rotate(-1.5deg) scale(.9); }
@@ -300,7 +310,17 @@
   document.getElementById('btnYes').addEventListener('click', function(){
     showScreen(3);
     sendTelegramConfirmation();
+    playStampAnimation();
   });
+
+  function playStampAnimation(){
+    const receipt = document.querySelector('.receipt');
+    if(!receipt) return;
+    receipt.classList.remove('stamp-anim');
+    // force reflow so the browser registers the class removal
+    void receipt.offsetWidth;
+    receipt.classList.add('stamp-anim');
+  }
 
   // ---- Telegram notification ----
   function sendTelegramConfirmation(){
